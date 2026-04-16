@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ka">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Space Defenders - Masterpiece</title>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <audio id="bg-music" loop>
+            <source src="assets/space_bg.mp3" type="audio/mpeg" />
+        </audio>
+        <audio id="sound-laser">
+            <source src="assets/laser.mp3" type="audio/mpeg" />
+        </audio>
+        <audio id="sound-explosion">
+            <source src="assets/explosion.mp3" type="audio/mpeg" />
+        </audio>
+
+        <div id="start-screen">
+            <h1>SPACE DEFENDERS</h1>
+            <div class="instructions">
+                <p><span>[ მაუსი ]</span> - ხომალდის მოძრაობა</p>
+                <p><span>[ კლიკი / SPACE ]</span> - სროლა</p>
+                <p><span>[ ESC ]</span> - პაუზა</p>
+                <p><span>[ ⚡ ბონუსები ]</span> - მეტეორებში დამალული!</p>
+            </div>
+
+            <div class="difficulty-label">აირჩიე სირთულე</div>
+            <div class="difficulty-selector">
+                <button class="diff-btn" data-difficulty="student">
+                    <span class="diff-icon">📚</span>
+                    <span class="diff-name">STUDENT</span>
+                    <span class="diff-desc">სწავლა ახლა იწყება</span>
+                </button>
+                <button class="diff-btn" data-difficulty="junior">
+                    <span class="diff-icon">💻</span>
+                    <span class="diff-name">JUNIOR</span>
+                    <span class="diff-desc">პირველი ნაბიჯები</span>
+                </button>
+                <button class="diff-btn" data-difficulty="middle">
+                    <span class="diff-icon">⚔️</span>
+                    <span class="diff-name">MIDDLE</span>
+                    <span class="diff-desc">ნამდვილი გამოწვევა</span>
+                </button>
+                <button class="diff-btn" data-difficulty="senior">
+                    <span class="diff-icon">🔥</span>
+                    <span class="diff-name">SENIOR</span>
+                    <span class="diff-desc">ლეგენდებისთვის</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="ui-layer">
+            <div id="score-el">SCORE: 0</div>
+            <div id="health-el">HP: 100%</div>
+        </div>
+
+        <div id="game-over-screen">
+            <h1>GAME OVER</h1>
+            <div id="final-score">SCORE: 0</div>
+            <button id="restart-btn">RESTART MISSION</button>
+        </div>
+
+        <div id="victory-screen">
+            <h1>🏆 VICTORY 🏆</h1>
+            <p class="victory-subtitle">ALL BOSSES DEFEATED</p>
+            <div id="victory-score">FINAL SCORE: 0</div>
+            <button id="play-again-btn">PLAY AGAIN</button>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- სკრიპტების ჩატვირთვის თანმიმდევრობა მნიშვნელოვანია -->
+        <script src="js/arsenal.js"></script>
+        <script src="js/classes.js"></script>
+        <script src="js/bosses.js"></script>
+        <script src="js/app.js"></script>
+        <script src="js/menu.js"></script>
+    </body>
+</html>
