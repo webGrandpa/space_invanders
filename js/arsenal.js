@@ -19,6 +19,7 @@ const DIFFICULTY_CONFIGS = {
         damageMul: 0.6,
         bossSpawnDelay: 120000,     // 2 წუთი
         randomDropChance: 0.14,
+        scoreMul: 0.5,             // ნახევარი ქულა
     },
     junior: {
         label: "JUNIOR",
@@ -35,6 +36,7 @@ const DIFFICULTY_CONFIGS = {
         damageMul: 0.8,
         bossSpawnDelay: 105000,     // 1:45
         randomDropChance: 0.10,
+        scoreMul: 0.8,             // 80% ქულა
     },
     middle: {
         label: "MIDDLE",
@@ -51,6 +53,7 @@ const DIFFICULTY_CONFIGS = {
         damageMul: 1.0,
         bossSpawnDelay: 90000,      // 1:30
         randomDropChance: 0.07,
+        scoreMul: 1.0,             // სტანდარტული ქულა
     },
     senior: {
         label: "SENIOR",
@@ -67,6 +70,7 @@ const DIFFICULTY_CONFIGS = {
         damageMul: 1.3,
         bossSpawnDelay: 90000,      // 1:30
         randomDropChance: 0.04,
+        scoreMul: 2.0,             // ორმაგი ქულა
     },
 };
 

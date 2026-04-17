@@ -139,12 +139,91 @@ class BossBase {
     drawDialogue() {
         if (!this.dialogue) return;
         ctx.save();
-        ctx.font = "bold 18px 'Press Start 2P', cursive";
-        ctx.fillStyle = "#ff0055";
+
+        // — Comic bubble settings —
+        const font = "bold 18px 'Press Start 2P', cursive";
+        ctx.font = font;
+        const text = this.dialogue;
+        const textWidth = ctx.measureText(text).width;
+        const padX = 18;
+        const padY = 14;
+        const bubbleW = textWidth + padX * 2;
+        const bubbleH = 36;
+        const cornerR = 12;
+        const tailH = 14;
+
+        // Position: below the boss
+        const bubbleX = this.x - bubbleW / 2;
+        const bubbleY = this.y + this.height / 2 + tailH + 8;
+
+        // Subtle float animation
+        const floatY = this.isDying ? 0 : Math.sin(Date.now() / 300) * 4;
+        const drawY = bubbleY + floatY;
+
+        // — Shadow —
+        ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
+
+        // — Bubble background —
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(bubbleX + cornerR, drawY);
+        ctx.lineTo(bubbleX + bubbleW - cornerR, drawY);
+        ctx.quadraticCurveTo(bubbleX + bubbleW, drawY, bubbleX + bubbleW, drawY + cornerR);
+        ctx.lineTo(bubbleX + bubbleW, drawY + bubbleH - cornerR);
+        ctx.quadraticCurveTo(bubbleX + bubbleW, drawY + bubbleH, bubbleX + bubbleW - cornerR, drawY + bubbleH);
+        ctx.lineTo(bubbleX + cornerR, drawY + bubbleH);
+        ctx.quadraticCurveTo(bubbleX, drawY + bubbleH, bubbleX, drawY + bubbleH - cornerR);
+        ctx.lineTo(bubbleX, drawY + cornerR);
+        ctx.quadraticCurveTo(bubbleX, drawY, bubbleX + cornerR, drawY);
+        ctx.closePath();
+        ctx.fill();
+
+        // — Reset shadow before stroke/tail —
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        // — Bubble border —
+        ctx.strokeStyle = "#222222";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // — Tail (triangle pointing up toward boss) —
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(this.x - 10, drawY);
+        ctx.lineTo(this.x, drawY - tailH);
+        ctx.lineTo(this.x + 10, drawY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#222222";
+        ctx.lineWidth = 2.5;
+        // Stroke only left and right edges of the tail (not the base that overlaps the bubble)
+        ctx.beginPath();
+        ctx.moveTo(this.x - 10, drawY);
+        ctx.lineTo(this.x, drawY - tailH);
+        ctx.lineTo(this.x + 10, drawY);
+        ctx.stroke();
+
+        // Cover the tail's base line with a white line so it blends into the bubble
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(this.x - 9, drawY + 1);
+        ctx.lineTo(this.x + 9, drawY + 1);
+        ctx.stroke();
+
+        // — Text —
+        ctx.font = font;
+        ctx.fillStyle = "#111111";
         ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-        const floatY = this.isDying ? 0 : Math.sin(Date.now() / 200) * 8;
-        ctx.fillText(this.dialogue, this.x, this.y - this.height / 2 - 50 + floatY);
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, this.x, drawY + bubbleH / 2 + 1);
+
         ctx.restore();
     }
 

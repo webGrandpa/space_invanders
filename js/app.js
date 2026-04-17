@@ -255,9 +255,10 @@ function applyPowerUp(powerUp) {
             if (upgradeWeapon()) {
                 showPickupMessage(`${WEAPON_LEVELS[weaponLevel].name}`, WEAPON_LEVELS[weaponLevel].color);
             } else {
-                score += 500;
+                const bonusPoints = Math.round(500 * getDifficulty().scoreMul);
+                score += bonusPoints;
                 scoreEl.innerText = `SCORE: ${score}`;
-                showPickupMessage("+500 BONUS", "#ffcc00");
+                showPickupMessage(`+${bonusPoints} BONUS`, "#ffcc00");
             }
             break;
         case "health":
@@ -512,7 +513,8 @@ function animate() {
                 createExplosion(boss.x - 50, boss.y + 30, "#ff4400");
                 createExplosion(boss.x + 50, boss.y - 30, "#ffaa00");
 
-                score += 2000 + (currentBossIndex * 1500);
+                const bossScore = Math.round((2000 + (currentBossIndex * 1500)) * getDifficulty().scoreMul);
+                score += bossScore;
                 scoreEl.innerText = `SCORE: ${score}`;
 
                 boss = null;
@@ -625,7 +627,7 @@ function animate() {
             if (activeEffects.shield) {
                 createExplosion(enemy.x, enemy.y, "#00ccff");
                 enemy.markedForDeletion = true;
-                score += 5;
+                score += Math.round(5 * getDifficulty().scoreMul);
                 scoreEl.innerText = `SCORE: ${score}`;
             } else {
                 createExplosion(player.x, player.y, "#ff0055");
@@ -647,7 +649,7 @@ function animate() {
 
                 if (enemy.hp <= 0) {
                     createExplosion(enemy.x, enemy.y, "#ffcc00");
-                    score += 10 * enemy.tier;
+                    score += Math.round(10 * enemy.tier * getDifficulty().scoreMul);
                     scoreEl.innerText = `SCORE: ${score}`;
 
                     if (enemy.tier >= 3) {
