@@ -7,6 +7,7 @@ import { Game } from "./core/game.js";
 import { preloadImages } from "./core/assets.js";
 import { loadSounds } from "./core/audio.js";
 import { Screens } from "./ui/screens.js";
+import { setupDebug } from "./core/debug.js";
 import { SHIP_IMAGE } from "./entities/player.js";
 import { METEOR_IMAGE } from "./entities/enemy.js";
 
@@ -31,5 +32,5 @@ loading.hidden = true;
 screens.show("menu", { highScore: game.highScore });
 game.run();
 
-// ?debug მისამართში — game ობიექტი ხელმისაწვდომია კონსოლიდან
-if (new URLSearchParams(location.search).has("debug")) window.game = game;
+// ?debug მისამართში — იხ. js/core/debug.js
+if (new URLSearchParams(location.search).has("debug")) setupDebug(game);

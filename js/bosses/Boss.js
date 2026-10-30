@@ -88,6 +88,9 @@ export class Boss {
     }
 
     move(dt) {
+        // vx-ის მხოლოდ მიმართულებას ვიყენებთ — სიჩქარე this.speed-იდან მოდის,
+        // ამიტომ this.speed-ის შეცვლა მაშინვე მოქმედებს
+        this.vx = Math.sign(this.vx) * this.speed;
         this.x += this.vx * dt;
         this.y += this.vy * dt;
 
@@ -240,9 +243,9 @@ export class Boss {
 
     // ========== ხატვა ==========
 
+    // ბუშტი (drawDialogue) ცალკე იხატება, ყველაფრის ბოლოს — იხ. Game.draw()
     draw(ctx) {
         this.drawBody(ctx);
-        this.drawDialogue(ctx);
     }
 
     // შვილობილ კლასს შეუძლია გადაფაროს (override), თუ სხვა გარეგნობა უნდა

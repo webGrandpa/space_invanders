@@ -30,7 +30,6 @@ export class Nukri extends Boss {
         this.enraged = true;
         this.shootCooldown *= 0.57;
         this.speed = 96;
-        this.vx = Math.sign(this.vx) * this.speed;
         this.say("!! ENRAGED !!");
     }
 

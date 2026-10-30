@@ -44,6 +44,7 @@ body {
 canvas {
     display: block;
     background: var(--black);
+    cursor: none; /* ხომალდს მაუსი მართავს — ისარი ხელს უშლის */
 }
 
 /* ქართული ტექსტი — Press Start 2P-ს ქართული ასოები არ აქვს */

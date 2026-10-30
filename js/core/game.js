@@ -18,6 +18,7 @@ import { Particle } from "../entities/particle.js";
 import { PowerUp } from "../entities/powerup.js";
 import { Star } from "../entities/star.js";
 import { drawHud, drawPauseOverlay } from "../ui/hud.js";
+import { drawDebug } from "./debug.js";
 
 const BOSS_DEATH_DURATION = 4; // წამი ბოსის სიკვდილის ანიმაციისთვის
 const HIGH_SCORE_KEY = "space-defenders:high-score";
@@ -31,6 +32,8 @@ export class Game {
         this.stars = Array.from({ length: 90 }, () => new Star());
         this.state = "menu";
         this.difficultyKey = "middle";
+        this.debug = null; // ?debug რეჟიმში ივსება (იხ. core/debug.js)
+        this.lastDt = 1 / 60;
         this.realTime = 0; // ყოველთვის მიდის, პაუზაზეც (ანიმაციებისთვის)
         this.highScore = loadHighScore();
         this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -189,6 +192,7 @@ export class Game {
 
     update(dt) {
         this.realTime += dt;
+        this.lastDt = dt;
         this.stars.forEach((star) => star.update(dt));
 
         if (this.state === "gameover" || this.state === "victory") {
@@ -294,7 +298,7 @@ export class Game {
         const shielded = this.hasEffect("shield");
 
         // ბოსს შეეჯახე — მყისიერი სიკვდილი
-        if (boss && !shielded && circleRectOverlap(player, boss)) {
+        if (boss && !shielded && !this.debug?.godMode && circleRectOverlap(player, boss)) {
             this.explode(player.x, player.y, "red");
             this.health = 0;
             this.endGame();
@@ -390,7 +394,7 @@ export class Game {
     // ========== მოთამაშის მდგომარეობა ==========
 
     takeDamage(amount) {
-        if (this.hasEffect("shield")) return;
+        if (this.hasEffect("shield") || this.debug?.godMode) return;
         this.health -= Math.round(amount * this.difficulty.damageMul);
         sfx.hurt();
         this.player.flash = 0.4;
@@ -534,9 +538,11 @@ export class Game {
         this.enemyBullets.forEach((b) => b.draw(ctx));
         if (this.state !== "gameover") this.player.draw(ctx, this.realTime);
         this.particles.forEach((p) => p.draw(ctx));
+        this.boss?.drawDialogue(ctx);
         ctx.restore();
 
         drawHud(ctx, this);
+        if (this.debug) drawDebug(ctx, this);
         if (this.state === "paused") drawPauseOverlay(ctx, this);
     }
 }
