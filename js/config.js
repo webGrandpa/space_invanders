@@ -107,7 +107,8 @@ export const DIFFICULTIES = {
 // მოთამაშე
 // ========================================
 export const PLAYER = {
-    size: 32, // სპრაიტის ზომა
+    width: 44, // სპრაიტის მაქსიმალური ზომა
+    height: 24,
     radius: 10, // რამდენად ახლოს უნდა მოხვდეს ტყვია
     speed: 260, // კლავიატურით მოძრაობის სიჩქარე
     maxHealth: 100,
@@ -196,18 +197,35 @@ export const WEAPONS = [
 // ========================================
 // ბონუსები (power-up), რომლებიც მეტეორებიდან ცვივა
 //   weight — რამდენად ხშირად ცვივა სხვებთან შედარებით
+//   icon   — 7×7 პიქსელიანი ხატულა: "X" = შეღებილი, "." = ცარიელი. დახატე შენი!
 //   apply(game) — რა ხდება აღებისას. აბრუნებს ტექსტს, რომელიც ეკრანზე გამოჩნდება.
 // ========================================
 export const POWERUPS = {
     weapon_up: {
         color: "lime",
-        symbol: "W",
+        icon: [
+            "...X...",
+            "..XXX..",
+            ".XXXXX.",
+            "XXXXXXX",
+            "..XXX..",
+            "..XXX..",
+            "..XXX..",
+        ],
         weight: 15,
         apply: (game) => game.upgradeWeapon(),
     },
     health: {
         color: "red",
-        symbol: "+",
+        icon: [
+            ".XX.XX.",
+            "XXXXXXX",
+            "XXXXXXX",
+            "XXXXXXX",
+            ".XXXXX.",
+            "..XXX..",
+            "...X...",
+        ],
         weight: 35,
         apply: (game) => {
             game.heal(25);
@@ -216,7 +234,15 @@ export const POWERUPS = {
     },
     rapid_fire: {
         color: "yellow",
-        symbol: "R",
+        icon: [
+            "....XX.",
+            "...XX..",
+            "..XX...",
+            ".XXXXX.",
+            "...XX..",
+            "..XX...",
+            ".XX....",
+        ],
         weight: 30,
         apply: (game) => {
             game.addEffect("rapid_fire", 8);
@@ -225,7 +251,15 @@ export const POWERUPS = {
     },
     shield: {
         color: "cyan",
-        symbol: "S",
+        icon: [
+            "XXXXXXX",
+            "X.....X",
+            "X.XXX.X",
+            "X.XXX.X",
+            ".X.X.X.",
+            "..X.X..",
+            "...X...",
+        ],
         weight: 20,
         apply: (game) => {
             game.addEffect("shield", 5);

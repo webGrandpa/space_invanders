@@ -12,45 +12,83 @@
         />
         <link rel="stylesheet" href="css/style.css" />
     </head>
-    <body>
+    <body class="crt">
         <canvas id="game"></canvas>
 
-        <div id="loading" class="screen">LOADING...</div>
+        <div id="loading" class="screen">
+            <p class="blink">LOADING...</p>
+        </div>
 
         <!-- ჩანს მხოლოდ მაშინ, თუ ფაილი პირდაპირ გაიხსნა (file://) -->
         <div id="file-warning" class="screen" hidden>
-            <h2>თამაშს სერვერი სჭირდება</h2>
-            <p>ES მოდულები ბრაუზერში მხოლოდ <code>http://</code>-ით მუშაობს.</p>
-            <p>გაუშვი ერთ-ერთი:</p>
-            <ul>
-                <li>VS Code → <b>Live Server</b> → "Open with Live Server"</li>
-                <li>ტერმინალში: <code>npx serve</code></li>
-                <li>ტერმინალში: <code>python3 -m http.server</code></li>
-            </ul>
+            <div class="panel ka">
+                <h2>თამაშს სერვერი სჭირდება</h2>
+                <p>ES მოდულები ბრაუზერში მხოლოდ <code>http://</code>-ით მუშაობს. გაუშვი ერთ-ერთი:</p>
+                <ul>
+                    <li>VS Code → <b>Live Server</b> → „Open with Live Server“</li>
+                    <li>ტერმინალში: <code>npx serve</code></li>
+                    <li>ტერმინალში: <code>python3 -m http.server</code></li>
+                </ul>
+            </div>
         </div>
 
         <div id="menu-screen" class="screen" hidden>
-            <h1>SPACE<br />DEFENDERS</h1>
-            <div class="instructions">
-                <p><span>მაუსი / ← →</span> მოძრაობა</p>
-                <p><span>კლიკი / SPACE</span> სროლა (დააჭირე და გეჭიროს)</p>
-                <p><span>ESC</span> პაუზა &nbsp; <span>M</span> ხმა</p>
-            </div>
-            <div class="difficulty-label">აირჩიე სირთულე</div>
+            <h1 class="title">
+                <span class="title-top">SPACE</span>
+                <span class="title-bottom">DEFENDERS</span>
+            </h1>
+            <p class="hi-score">HI-SCORE <span data-field="highScore">000000</span></p>
+
+            <p class="blink">SELECT DIFFICULTY</p>
             <div id="difficulty-selector" class="difficulty-selector"></div>
+
+            <ul class="controls">
+                <li><kbd>← →</kbd> <kbd class="ka">მაუსი</kbd> <span class="ka">მოძრაობა</span></li>
+                <li><kbd>SPACE</kbd> <kbd class="ka">კლიკი</kbd> <span class="ka">სროლა</span></li>
+                <li><kbd>ESC</kbd> <span class="ka">პაუზა</span></li>
+                <li><kbd>M</kbd> <span class="ka">ხმა</span></li>
+            </ul>
         </div>
 
         <div id="gameover-screen" class="screen" hidden>
-            <h1 class="title-lose">GAME OVER</h1>
-            <p class="final-score">SCORE: <span data-score>0</span></p>
-            <button data-action="menu">RESTART MISSION</button>
+            <h1 class="title title-lose">GAME OVER</h1>
+            <p class="new-record blink" hidden>NEW RECORD!</p>
+            <dl class="stats panel">
+                <dt>SCORE</dt>
+                <dd data-field="score">000000</dd>
+                <dt>HI-SCORE</dt>
+                <dd data-field="highScore">000000</dd>
+                <dt>STAGE</dt>
+                <dd data-field="stage">1/4</dd>
+                <dt>METEORS</dt>
+                <dd data-field="kills">0</dd>
+                <dt>TIME</dt>
+                <dd data-field="time">0:00</dd>
+            </dl>
+            <div class="actions">
+                <button data-action="retry">TRY AGAIN</button>
+                <button data-action="menu" class="secondary">MENU</button>
+            </div>
         </div>
 
         <div id="victory-screen" class="screen" hidden>
-            <h1 class="title-win">VICTORY</h1>
+            <h1 class="title title-win">VICTORY</h1>
             <p class="subtitle">ALL BOSSES DEFEATED</p>
-            <p class="final-score">FINAL SCORE: <span data-score>0</span></p>
-            <button data-action="menu">PLAY AGAIN</button>
+            <p class="new-record blink" hidden>NEW RECORD!</p>
+            <dl class="stats panel">
+                <dt>SCORE</dt>
+                <dd data-field="score">000000</dd>
+                <dt>HI-SCORE</dt>
+                <dd data-field="highScore">000000</dd>
+                <dt>METEORS</dt>
+                <dd data-field="kills">0</dd>
+                <dt>TIME</dt>
+                <dd data-field="time">0:00</dd>
+            </dl>
+            <div class="actions">
+                <button data-action="retry">PLAY AGAIN</button>
+                <button data-action="menu" class="secondary">MENU</button>
+            </div>
         </div>
 
         <script>

@@ -26,7 +26,8 @@ export class Input {
         window.addEventListener("pointercancel", () => (this.pointerDown = false));
 
         window.addEventListener("keydown", (e) => {
-            if (GAME_KEYS.includes(e.code)) e.preventDefault();
+            // ღილაკზე (მენიუში) Space/ისრები ჩვეულებრივ უნდა მუშაობდეს
+            if (GAME_KEYS.includes(e.code) && !e.target.closest?.("button")) e.preventDefault();
             this.keys.add(e.code);
             if (!e.repeat) this.keyListeners.forEach((fn) => fn(e.code));
         });

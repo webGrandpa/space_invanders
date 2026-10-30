@@ -20,6 +20,7 @@ import { Star } from "../entities/star.js";
 import { drawHud, drawPauseOverlay } from "../ui/hud.js";
 
 const BOSS_DEATH_DURATION = 4; // წამი ბოსის სიკვდილის ანიმაციისთვის
+const HIGH_SCORE_KEY = "space-defenders:high-score";
 
 export class Game {
     constructor(canvas, screens) {
@@ -31,6 +32,8 @@ export class Game {
         this.state = "menu";
         this.difficultyKey = "middle";
         this.realTime = 0; // ყოველთვის მიდის, პაუზაზეც (ანიმაციებისთვის)
+        this.highScore = loadHighScore();
+        this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
         this.reset();
         this.input.onKeyPress((code) => this.handleKey(code));
@@ -60,7 +63,14 @@ export class Game {
         this.effects = {}; // ეფექტის სახელი → დასრულების დრო
         this.weaponDropsLeft = 0;
         this.message = null; // { text, color, until }
-        this.warning = null; // { text, until }
+        this.banner = null; // { title, subtitle, style, until }
+
+        // ეფექტები
+        this.shakePower = 0;
+        this.shakeUntil = 0;
+        this.hurtUntil = 0;
+        this.freezeUntil = 0; // "hit-stop": წამიერი გაჩერება მნიშვნელოვან მომენტში
+        this.nextDeathBlast = 0;
     }
 
     // ========== მოსახერხებელი getter-ები ==========
@@ -111,6 +121,7 @@ export class Game {
         this.levelStartTime = this.time;
         this.spawnTimer = this.spawnInterval;
         this.weaponDropsLeft = this.difficulty.weaponDropsPerLevel;
+        this.showBanner(`STAGE ${index + 1}`, "GET READY");
     }
 
     togglePause() {
@@ -124,26 +135,41 @@ export class Game {
     }
 
     endGame() {
-        this.state = "gameover";
-        stopMusic();
-        this.screens.show("gameover", { score: this.score });
+        this.finish("gameover");
     }
 
     win() {
-        this.state = "victory";
+        this.finish("victory");
+    }
+
+    finish(state) {
+        this.state = state;
         stopMusic();
-        this.screens.show("victory", { score: this.score });
+        const newRecord = this.score > this.highScore;
+        if (newRecord) {
+            this.highScore = this.score;
+            saveHighScore(this.score);
+        }
+        this.screens.show(state, {
+            score: this.score,
+            highScore: this.highScore,
+            newRecord,
+            stage: `${this.levelIndex + 1}/${this.levelCount}`,
+            kills: String(this.kills),
+            time: formatTime(this.time),
+        });
     }
 
     returnToMenu() {
         this.reset();
         this.state = "menu";
-        this.screens.show("menu");
+        this.screens.show("menu", { highScore: this.highScore });
     }
 
     handleKey(code) {
         if (code === "Escape" || code === "KeyP") this.togglePause();
         if (code === "KeyM") toggleMute();
+        if (code === "KeyC") this.screens.toggleCrt();
     }
 
     // ========== მთავარი ციკლი ==========
@@ -170,6 +196,7 @@ export class Game {
             this.cleanup();
         }
         if (this.state !== "playing") return;
+        if (this.realTime < this.freezeUntil) return;
 
         this.timers.update(dt);
         this.updateLevel(dt);
@@ -204,7 +231,7 @@ export class Game {
     spawnBoss() {
         const BossClass = this.level.boss;
         this.boss = new BossClass(this);
-        this.warning = { text: `BOSS ${this.levelIndex + 1}: ${this.boss.name}`, until: this.time + 3 };
+        this.showBanner("WARNING", `BOSS ${this.levelIndex + 1}: ${this.boss.name}`, "warning");
         sfx.warning();
     }
 
@@ -212,24 +239,44 @@ export class Game {
         this.boss.isDying = true;
         this.boss.say(this.boss.config.finalWords, BOSS_DEATH_DURATION);
         this.bossDeathTimer = 0;
+        this.nextDeathBlast = 0;
+        this.enemyBullets = [];
+        this.freezeUntil = this.realTime + 0.2;
+        this.shake(4, 0.3);
     }
 
     updateBossDeath(dt) {
         if (!this.boss?.isDying) return;
         this.bossDeathTimer += dt;
+
+        // სიკვდილის განმავლობაში ბოსზე პატარა აფეთქებები ჩნდება
+        const boss = this.boss;
+        if (this.bossDeathTimer > this.nextDeathBlast) {
+            this.nextDeathBlast += 0.25;
+            const x = boss.x + (Math.random() - 0.5) * boss.width;
+            const y = boss.y + (Math.random() - 0.5) * boss.height;
+            this.spawnParticles(x, y, Math.random() < 0.5 ? "orange" : "yellow", 10);
+            sfx.explosion();
+        }
         if (this.bossDeathTimer < BOSS_DEATH_DURATION) return;
 
-        const { x, y } = this.boss;
-        this.explode(x, y, "yellow");
-        this.explode(x - 20, y + 12, "orange");
-        this.explode(x + 20, y - 12, "red");
+        this.explode(boss.x, boss.y, "yellow");
+        this.explode(boss.x - 20, boss.y + 12, "orange");
+        this.explode(boss.x + 20, boss.y - 12, "red");
         sfx.bigExplosion();
-        this.addScore((2000 + this.levelIndex * 1500) * this.difficulty.scoreMul);
+        this.shake(6, 0.6);
+        const points = Math.round((2000 + this.levelIndex * 1500) * this.difficulty.scoreMul);
+        this.addScore(points);
 
         this.boss = null;
-        this.enemyBullets = [];
-        if (this.levelIndex + 1 >= LEVELS.length) this.win();
-        else this.startLevel(this.levelIndex + 1);
+        if (this.levelIndex + 1 >= LEVELS.length) {
+            this.win();
+        } else {
+            this.startLevel(this.levelIndex + 1);
+            this.showBanner("STAGE CLEAR", `+${points}`);
+            // შემდეგი ლეველის სათაური ცოტა მოგვიანებით
+            this.timers.after(2.5, () => this.showBanner(`STAGE ${this.levelIndex + 1}`, "GET READY"));
+        }
     }
 
     fire() {
@@ -301,7 +348,7 @@ export class Game {
             for (const bullet of this.bullets) {
                 if (bullet.dead || !circlesOverlap(bullet, enemy)) continue;
                 bullet.dead = true;
-                enemy.hp -= bullet.damage;
+                enemy.hit(bullet.damage);
                 this.spawnParticles(bullet.x, bullet.y, bullet.color, 3);
                 if (enemy.hp <= 0) {
                     fragments.push(...this.destroyEnemy(enemy));
@@ -346,6 +393,9 @@ export class Game {
         if (this.hasEffect("shield")) return;
         this.health -= Math.round(amount * this.difficulty.damageMul);
         sfx.hurt();
+        this.player.flash = 0.4;
+        this.hurtUntil = this.time + 0.25;
+        this.shake(3, 0.2);
 
         const before = this.player.weaponLevel;
         this.player.weaponLevel = Math.max(1, before - this.difficulty.weaponDowngrade);
@@ -391,6 +441,17 @@ export class Game {
 
     showMessage(text, color) {
         this.message = { text, color, until: this.time + 1.5 };
+    }
+
+    // ეკრანის შუაში დიდი წარწერა. style: "info" ან "warning"
+    showBanner(title, subtitle = "", style = "info", seconds = 2.5) {
+        this.banner = { title, subtitle, style, until: this.time + seconds, duration: seconds };
+    }
+
+    shake(power, seconds) {
+        if (this.reducedMotion) return;
+        this.shakePower = Math.max(this.shakePower * (this.realTime < this.shakeUntil ? 1 : 0), power);
+        this.shakeUntil = this.realTime + seconds;
     }
 
     // ========== ბონუსები ==========
@@ -448,19 +509,32 @@ export class Game {
     draw() {
         const ctx = this.ctx;
         ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
+        ctx.imageSmoothingEnabled = false;
         ctx.fillStyle = PALETTE.black;
         ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+        // ეკრანის კანკალი: მთელ სამყაროს ოდნავ ვწევთ (HUD-ის გარდა)
+        ctx.save();
+        if (this.realTime < this.shakeUntil) {
+            const dx = Math.round((Math.random() - 0.5) * 2 * this.shakePower);
+            const dy = Math.round((Math.random() - 0.5) * 2 * this.shakePower);
+            ctx.translate(dx, dy);
+        }
+
         this.stars.forEach((star) => star.draw(ctx, this.realTime));
-        if (this.state === "menu") return;
+        if (this.state === "menu") {
+            ctx.restore();
+            return;
+        }
 
         this.powerUps.forEach((p) => p.draw(ctx));
         this.enemies.forEach((e) => e.draw(ctx));
         this.boss?.draw(ctx);
         this.bullets.forEach((b) => b.draw(ctx));
         this.enemyBullets.forEach((b) => b.draw(ctx));
-        if (this.state !== "gameover") this.player.draw(ctx);
+        if (this.state !== "gameover") this.player.draw(ctx, this.realTime);
         this.particles.forEach((p) => p.draw(ctx));
+        ctx.restore();
 
         drawHud(ctx, this);
         if (this.state === "paused") drawPauseOverlay(ctx, this);
@@ -477,4 +551,26 @@ function pickWeighted(options) {
         if (roll < 0) return key;
     }
     return entries[0][0];
+}
+
+function loadHighScore() {
+    try {
+        return Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
+    } catch {
+        return 0;
+    }
+}
+
+function saveHighScore(score) {
+    try {
+        localStorage.setItem(HIGH_SCORE_KEY, String(score));
+    } catch {
+        // პირად რეჟიმში შენახვა შეიძლება აკრძალული იყოს — არაუშავს
+    }
+}
+
+// 125.4 → "2:05"
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 }

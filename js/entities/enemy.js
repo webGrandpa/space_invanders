@@ -1,7 +1,7 @@
 // ===== Enemy — მეტეორი =====
 // tier 1-3: რაც დიდია, მით მეტი სიცოცხლე აქვს. დიდი მეტეორი ნამსხვრევებად იშლება.
 import { GAME_WIDTH, GAME_HEIGHT } from "../config.js";
-import { getImage } from "../core/assets.js";
+import { getSprite, drawSprite } from "../core/assets.js";
 import { random } from "../core/collision.js";
 
 export const METEOR_IMAGE = "assets/sprites/meteor.avif";
@@ -16,10 +16,17 @@ export class Enemy {
         this.vy = random(12, 48) * speedMul;
         this.maxHp = this.tier * 2;
         this.hp = this.maxHp;
+        this.flash = 0; // მოხვედრისას წამიერად თეთრდება
         this.dead = false;
     }
 
+    hit(damage) {
+        this.hp -= damage;
+        this.flash = 0.06;
+    }
+
     update(dt) {
+        this.flash = Math.max(0, this.flash - dt);
         this.x += this.vx * dt;
         this.y += this.vy * dt;
         if (this.x - this.radius < 0) this.vx = Math.abs(this.vx);
@@ -39,26 +46,24 @@ export class Enemy {
     }
 
     draw(ctx) {
-        const img = getImage(METEOR_IMAGE);
         const size = this.radius * 2;
-        if (img) {
-            ctx.drawImage(img, this.x - this.radius, this.y - this.radius, size, size);
+        const sprite = getSprite(METEOR_IMAGE, size, size, this.flash > 0 ? "#ffffff" : null);
+        if (sprite) {
+            drawSprite(ctx, sprite, this.x, this.y);
         } else {
             ctx.fillStyle = "#8a5a44";
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillRect(Math.round(this.x - this.radius), Math.round(this.y - this.radius), size, size);
         }
 
         // სიცოცხლის ზოლი მხოლოდ დაზიანების შემდეგ ჩანს
         if (this.hp < this.maxHp) {
-            const width = this.radius * 1.5;
-            const left = this.x - width / 2;
-            const top = this.y - this.radius - 5;
-            ctx.fillStyle = "#ff3b5c";
+            const width = Math.round(this.radius * 1.5);
+            const left = Math.round(this.x - width / 2);
+            const top = Math.round(this.y - this.radius - 5);
+            ctx.fillStyle = "#26285e";
             ctx.fillRect(left, top, width, 2);
             ctx.fillStyle = "#9cff57";
-            ctx.fillRect(left, top, width * (this.hp / this.maxHp), 2);
+            ctx.fillRect(left, top, Math.ceil(width * (this.hp / this.maxHp)), 2);
         }
     }
 }

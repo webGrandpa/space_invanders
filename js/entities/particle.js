@@ -8,7 +8,7 @@ export class Particle {
         this.y = y;
         this.vx = random(-100, 100);
         this.vy = random(-100, 100);
-        this.size = random(1, 2.5);
+        this.size = Math.random() < 0.3 ? 2 : 1;
         this.color = color(colorName);
         this.life = 1; // 1 → 0
     }
@@ -28,9 +28,10 @@ export class Particle {
     }
 
     draw(ctx) {
-        ctx.globalAlpha = Math.max(0, this.life);
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.size, this.size);
+        // ნაწილაკი ბოლოს თეთრიდან ფერადზე გადადის და ქრება
+        ctx.globalAlpha = this.life > 0.3 ? 1 : this.life / 0.3;
+        ctx.fillStyle = this.life > 0.85 ? "#ffffff" : this.color;
+        ctx.fillRect(Math.round(this.x), Math.round(this.y), this.size, this.size);
         ctx.globalAlpha = 1;
     }
 }

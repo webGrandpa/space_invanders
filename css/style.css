@@ -1,14 +1,23 @@
+/* ========================================
+   ფერები — იგივე პალიტრა, რაც js/config.js-ში (PALETTE)
+   ======================================== */
 :root {
     --black: #0b0b1a;
     --night: #161633;
+    --navy: #26285e;
     --slate: #4d5288;
     --gray: #9aa0c3;
     --white: #f4f4ff;
     --red: #ff3b5c;
+    --orange: #ff8a3d;
     --yellow: #ffd23f;
     --green: #2ee6a6;
     --cyan: #3fd8ff;
+
+    --s: 1; /* UI-ს მასშტაბი: დიდ ეკრანზე იზრდება (იხ. ქვემოთ) */
+    --px: calc(4px * var(--s)); /* ერთი "პიქსელის" ზომა ჩარჩოებისთვის */
     --font: "Press Start 2P", "Noto Sans Georgian", monospace;
+    --font-ka: "Noto Sans Georgian", sans-serif;
 }
 
 * {
@@ -18,12 +27,15 @@
 body {
     margin: 0;
     height: 100vh;
+    height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #000;
     color: var(--white);
     font-family: var(--font);
+    font-size: calc(8px * var(--s));
+    line-height: 1.5;
     overflow: hidden;
     touch-action: none;
     user-select: none;
@@ -32,6 +44,26 @@ body {
 canvas {
     display: block;
     background: var(--black);
+}
+
+/* ქართული ტექსტი — Press Start 2P-ს ქართული ასოები არ აქვს */
+.ka {
+    font-family: var(--font-ka);
+    font-weight: 700;
+    font-size: calc(13px * var(--s));
+    letter-spacing: 0;
+}
+
+/* ===== CRT ეფექტი (C ღილაკით ირთვება/ითიშება) ===== */
+body.crt::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    background:
+        radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.45) 100%),
+        repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
 }
 
 /* ===== ეკრანები ===== */
@@ -44,8 +76,9 @@ canvas {
     justify-content: center;
     gap: 24px;
     padding: 16px;
-    background: rgba(11, 11, 26, 0.88);
+    background: rgba(11, 11, 26, 0.72);
     text-align: center;
+    overflow-y: auto;
     z-index: 10;
 }
 
@@ -53,12 +86,48 @@ canvas {
     display: none;
 }
 
-h1 {
+#loading {
+    background: var(--black);
+    font-size: calc(16px * var(--s));
+    color: var(--gray);
+}
+
+/* ===== პიქსელური ჩარჩო: box-shadow "მოჭრის" კუთხეებს ===== */
+.panel,
+button {
+    --frame: var(--slate);
+    margin: var(--px);
+    border: none;
+    box-shadow:
+        0 calc(var(--px) * -1) 0 0 var(--frame),
+        0 var(--px) 0 0 var(--frame),
+        calc(var(--px) * -1) 0 0 0 var(--frame),
+        var(--px) 0 0 0 var(--frame);
+}
+
+.panel {
+    padding: 16px 24px;
+    background: var(--night);
+}
+
+/* ===== სათაურები ===== */
+.title {
     margin: 0;
-    font-size: clamp(1.5rem, 6vw, 3.5rem);
-    line-height: 1.3;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: clamp(24px, 7vw, 56px);
+    font-weight: normal;
+    line-height: 1.1;
     color: var(--cyan);
-    text-shadow: 4px 4px 0 var(--slate);
+    /* მყარი პიქსელური ჩრდილი */
+    text-shadow:
+        4px 4px 0 var(--navy),
+        8px 8px 0 var(--black);
+}
+
+.title-bottom {
+    color: var(--yellow);
 }
 
 .title-lose {
@@ -69,100 +138,241 @@ h1 {
     color: var(--yellow);
 }
 
-.instructions {
-    padding: 16px 24px;
-    border: 2px solid var(--slate);
-    font-size: 0.75rem;
-    line-height: 2;
-}
-
-.instructions p {
-    margin: 0;
-}
-
-.instructions span {
-    color: var(--yellow);
-}
-
-.difficulty-label,
 .subtitle {
-    font-size: 0.75rem;
+    margin: 0;
+    font-size: calc(8px * var(--s));
+    color: var(--green);
+}
+
+.hi-score {
+    margin: 0;
+    font-size: calc(8px * var(--s));
     color: var(--gray);
 }
 
-.final-score {
-    font-size: 1rem;
-    color: var(--cyan);
+.hi-score span {
+    color: var(--yellow);
+}
+
+.blink {
+    margin: 0;
+    font-size: calc(8px * var(--s));
+    color: var(--white);
+    animation: blink 1s steps(2, start) infinite;
+}
+
+.new-record {
+    color: var(--yellow);
+    font-size: calc(16px * var(--s));
+}
+
+@keyframes blink {
+    to {
+        visibility: hidden;
+    }
 }
 
 /* ===== ღილაკები ===== */
 button {
     font-family: var(--font);
-    font-size: 0.9rem;
-    padding: 14px 24px;
-    color: var(--cyan);
-    background: transparent;
-    border: 2px solid currentColor;
+    font-size: calc(8px * var(--s));
+    padding: 12px 16px;
+    color: var(--black);
+    background: var(--cyan);
+    --frame: var(--white);
     cursor: pointer;
 }
 
 button:hover,
 button:focus-visible {
-    color: var(--black);
-    background: var(--cyan);
+    background: var(--yellow);
     outline: none;
 }
 
-.difficulty-selector {
+button:active {
+    transform: translateY(2px);
+}
+
+button.secondary {
+    color: var(--white);
+    background: var(--night);
+    --frame: var(--slate);
+}
+
+button.secondary:hover,
+button.secondary:focus-visible {
+    color: var(--black);
+    background: var(--yellow);
+    --frame: var(--white);
+}
+
+.actions {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 12px;
-    max-width: 720px;
+    gap: 16px;
+}
+
+/* ===== სირთულის არჩევა ===== */
+.difficulty-selector {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    width: min(100%, calc(680px * var(--s)));
 }
 
 /* ფერი თითოეულ ღილაკს JS-იდან ეძლევა: --accent */
 .diff-btn {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 8px;
-    min-width: 150px;
+    padding: 16px 8px;
     color: var(--white);
-    border-color: var(--slate);
+    background: var(--night);
+    --frame: var(--slate);
 }
 
 .diff-btn:hover,
 .diff-btn:focus-visible,
 .diff-btn.selected {
-    color: var(--accent);
-    background: transparent;
-    border-color: var(--accent);
+    background: var(--navy);
+    --frame: var(--accent);
 }
 
 .diff-btn.selected {
-    transform: scale(1.05);
+    animation: select 0.3s steps(3);
+}
+
+@keyframes select {
+    50% {
+        background: var(--accent);
+    }
 }
 
 .diff-name {
-    font-size: 0.8rem;
+    font-size: calc(8px * var(--s));
+    color: var(--accent);
+}
+
+.diff-pips {
+    display: flex;
+    gap: 2px;
+}
+
+.diff-pips i {
+    width: 8px;
+    height: 4px;
+    background: var(--slate);
+}
+
+.diff-pips i.on {
+    background: var(--accent);
 }
 
 .diff-desc {
-    font-size: 0.6rem;
+    font-size: calc(11px * var(--s));
     color: var(--gray);
 }
 
-/* ===== file:// გაფრთხილება ===== */
-#file-warning {
-    font-family: "Noto Sans Georgian", sans-serif;
-    line-height: 1.8;
-    gap: 4px;
+/* ===== მართვის მინიშნებები ===== */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--gray);
 }
 
-#file-warning ul {
+.controls li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.controls .ka {
+    font-size: calc(11px * var(--s));
+}
+
+kbd {
+    padding: 4px 6px;
+    font-family: var(--font);
+    font-size: calc(8px * var(--s));
+    color: var(--white);
+    background: var(--navy);
+    box-shadow: 0 2px 0 var(--slate);
+}
+
+/* ===== სტატისტიკა ===== */
+.stats {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 12px 32px;
+    margin: var(--px);
     text-align: left;
 }
 
-#file-warning code {
+.stats dt {
+    color: var(--gray);
+}
+
+.stats dd {
+    margin: 0;
+    text-align: right;
+    color: var(--white);
+}
+
+.stats dd:first-of-type {
     color: var(--yellow);
+}
+
+/* ===== file:// გაფრთხილება ===== */
+#file-warning .panel {
+    max-width: 520px;
+    text-align: left;
+    line-height: 1.8;
+}
+
+#file-warning h2 {
+    margin-top: 0;
+    color: var(--yellow);
+}
+
+#file-warning code {
+    color: var(--cyan);
+}
+
+/* ===== დიდი ეკრანი: ყველაფერი 1.5-ჯერ / 2-ჯერ დიდია ===== */
+@media (min-width: 1100px) and (min-height: 650px) {
+    :root {
+        --s: 1.5;
+    }
+}
+
+@media (min-width: 1800px) and (min-height: 1000px) {
+    :root {
+        --s: 2;
+    }
+}
+
+/* ===== პატარა ეკრანი ===== */
+@media (max-width: 600px) {
+    .difficulty-selector {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .screen {
+        gap: 16px;
+    }
+}
+
+/* ===== ნაკლები მოძრაობა, თუ მომხმარებელმა ასე აირჩია ===== */
+@media (prefers-reduced-motion: reduce) {
+    .blink,
+    .diff-btn.selected {
+        animation: none;
+    }
 }

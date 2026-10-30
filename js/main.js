@@ -17,17 +17,18 @@ await Promise.all([
     preloadImages([SHIP_IMAGE, METEOR_IMAGE, ...LEVELS.map((level) => level.boss.config.image)]),
     loadSounds(),
     document.fonts.load("8px 'Press Start 2P'"),
-    document.fonts.load("8px 'Noto Sans Georgian'", "ა"),
+    document.fonts.load("bold 10px 'Noto Sans Georgian'", "ა"),
 ]);
 
 const screens = new Screens({
     onStart: (difficulty) => game.start(difficulty),
+    onRetry: () => game.start(game.difficultyKey),
     onMenu: () => game.returnToMenu(),
 });
 const game = new Game(canvas, screens);
 
 loading.hidden = true;
-screens.show("menu");
+screens.show("menu", { highScore: game.highScore });
 game.run();
 
 // ?debug მისამართში — game ობიექტი ხელმისაწვდომია კონსოლიდან

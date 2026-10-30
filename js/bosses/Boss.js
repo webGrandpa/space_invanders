@@ -9,8 +9,9 @@
 // ========================================
 
 import { GAME_WIDTH, GAME_HEIGHT, color } from "../config.js";
-import { getImage } from "../core/assets.js";
-import { random } from "../core/collision.js";
+import { getSprite, drawSprite } from "../core/assets.js";
+import { clamp, random } from "../core/collision.js";
+import { drawPixelFrame, fontFor, wrapText } from "../ui/draw.js";
 import { Bullet } from "../entities/bullet.js";
 import { Enemy } from "../entities/enemy.js";
 
@@ -60,11 +61,13 @@ export class Boss {
         this.isDying = false;
         this.dialogue = null; // { text, until }
         this.healthTriggers = [];
+        this.flash = 0;
     }
 
     // ========== ციკლი ==========
 
     update(dt) {
+        this.flash = Math.max(0, this.flash - dt);
         if (this.isDying) return;
         this.move(dt);
 
@@ -111,6 +114,7 @@ export class Boss {
     takeDamage(amount) {
         if (this.isDying) return;
         this.health = Math.max(0, this.health - amount);
+        this.flash = 0.05;
         for (const trigger of this.healthTriggers) {
             if (!trigger.done && this.health <= this.maxHealth * trigger.ratio) {
                 trigger.done = true;
@@ -125,7 +129,7 @@ export class Boss {
     shoot({ x = this.x, y = this.y, vx = 0, vy, radius = 3, color = "red", damage = 10 }) {
         const speedMul = this.game.difficulty.bossBulletSpeedMul;
         this.game.enemyBullets.push(
-            new Bullet({ x, y, vx: vx * speedMul, vy: vy * speedMul, radius, color, damage }),
+            new Bullet({ x, y, vx: vx * speedMul, vy: vy * speedMul, radius, color, damage, owner: "boss" }),
         );
     }
 
@@ -238,68 +242,51 @@ export class Boss {
 
     draw(ctx) {
         this.drawBody(ctx);
-        this.drawHealthBar(ctx);
         this.drawDialogue(ctx);
     }
 
     // შვილობილ კლასს შეუძლია გადაფაროს (override), თუ სხვა გარეგნობა უნდა
     drawBody(ctx) {
-        const img = getImage(this.config.image);
-        const left = this.x - this.width / 2;
-        if (img) {
-            ctx.drawImage(img, left, this.top, this.width, this.height);
+        // მოხვედრისას ან სიკვდილისას თეთრად "ციმციმებს"
+        const flashing = this.flash > 0 || (this.isDying && Math.floor(this.game.time * 12) % 2);
+        const sprite = getSprite(this.config.image, this.width, this.height, flashing ? "#ffffff" : null);
+        // სიკვდილისას კანკალებს
+        const shake = this.isDying ? random(-2, 2) : 0;
+        if (sprite) {
+            drawSprite(ctx, sprite, this.x + shake, this.y);
         } else {
-            ctx.fillStyle = color(this.config.color);
-            ctx.fillRect(left, this.top, this.width, this.height);
+            ctx.fillStyle = flashing ? "#ffffff" : color(this.config.color);
+            ctx.fillRect(Math.round(this.x - this.width / 2 + shake), Math.round(this.top), this.width, this.height);
         }
     }
 
-    drawHealthBar(ctx) {
-        const width = Math.max(this.width * 0.8, 80);
-        const left = this.x - width / 2;
-        const top = this.top - 10;
-        const ratio = this.health / this.maxHealth;
-        ctx.fillStyle = "#26285e";
-        ctx.fillRect(left, top, width, 4);
-        ctx.fillStyle = ratio > 0.5 ? "#9cff57" : ratio > 0.25 ? "#ffd23f" : "#ff3b5c";
-        ctx.fillRect(left, top, width * ratio, 4);
-
-        ctx.fillStyle = "#9aa0c3";
-        ctx.font = "8px 'Press Start 2P', 'Noto Sans Georgian'";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-        ctx.fillText(this.name, this.x, top - 3);
-    }
-
+    // კომიქსის "ბუშტი" ბოსის ქვემოთ
     drawDialogue(ctx) {
         if (!this.dialogue || this.game.time > this.dialogue.until) return;
-        const text = this.dialogue.text;
 
-        ctx.font = "bold 10px 'Press Start 2P', 'Noto Sans Georgian'";
-        const width = ctx.measureText(text).width + 16;
-        const height = 18;
-        const float = this.isDying ? 0 : Math.sin(this.game.time * 3) * 2;
-        const left = this.x - width / 2;
-        const top = this.bottom + 10 + float;
+        ctx.font = fontFor(this.dialogue.text);
+        const lines = wrapText(ctx, this.dialogue.text, 160);
+        const lineHeight = 12;
+        const width = Math.ceil(Math.max(...lines.map((line) => ctx.measureText(line).width))) + 12;
+        const height = lines.length * lineHeight + 8;
+        const float = this.isDying ? 0 : Math.round(Math.sin(this.game.time * 3) * 2);
+        const left = Math.round(clamp(this.x - width / 2, 4, GAME_WIDTH - width - 4));
+        const top = Math.round(this.bottom + 10 + float);
+        const tailX = Math.round(clamp(this.x, left + 6, left + width - 6));
 
-        ctx.fillStyle = "#f4f4ff";
-        ctx.strokeStyle = "#0b0b1a";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.roundRect(left, top, width, height, 5);
-        ctx.fill();
-        ctx.stroke();
+        drawPixelFrame(ctx, left + 2, top + 2, width, height, { fill: "slate", border: "slate" });
+        drawPixelFrame(ctx, left, top, width, height, { fill: "white", border: "black" });
+        // საფეხურებიანი "კუდი" ბოსისკენ
+        ctx.fillStyle = color("white");
+        ctx.fillRect(tailX - 2, top - 1, 4, 2);
+        ctx.fillRect(tailX - 1, top - 3, 2, 2);
+        ctx.fillRect(tailX, top - 5, 1, 2);
 
-        // "კუდი" ბოსისკენ
-        ctx.beginPath();
-        ctx.moveTo(this.x - 5, top + 0.5);
-        ctx.lineTo(this.x, top - 6);
-        ctx.lineTo(this.x + 5, top + 0.5);
-        ctx.fill();
-
-        ctx.fillStyle = "#0b0b1a";
+        ctx.fillStyle = color("black");
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(text, this.x, top + height / 2 + 1);
+        lines.forEach((line, i) => {
+            ctx.fillText(line, left + width / 2, top + 4 + i * lineHeight + lineHeight / 2);
+        });
     }
 }
